@@ -6,7 +6,7 @@ branches:
   only:
     - master
 
-clone_folder: c:\gopath\src\github.com\rs\xid
+clone_folder: c:\gopath\src\github.com\skarm\xid
 
 environment:
   GOPATH: c:\gopath

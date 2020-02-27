@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/rs/xid"
+	"github.com/skarm/xid"
 )
 
 func TestIDValue(t *testing.T) {
@@ -28,6 +28,8 @@ func TestIDValue(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
 			got, _ := tt.id.Value()
 			if !reflect.DeepEqual(got, tt.expectedVal) {
@@ -69,6 +71,8 @@ func TestIDScan(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
 			id := &ID{}
 			err := id.Scan(tt.val)
@@ -80,7 +84,6 @@ func TestIDScan(t *testing.T) {
 					t.Errorf("wanted %v, got %v", tt.expectedID, id)
 				}
 			}
-
 		})
 	}
 }

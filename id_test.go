@@ -19,21 +19,21 @@ type IDParts struct {
 }
 
 var IDs = []IDParts{
-	IDParts{
+	{
 		ID{0x4d, 0x88, 0xe1, 0x5b, 0x60, 0xf4, 0x86, 0xe4, 0x28, 0x41, 0x2d, 0xc9},
 		1300816219,
 		[]byte{0x60, 0xf4, 0x86},
 		0xe428,
 		4271561,
 	},
-	IDParts{
+	{
 		ID{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 		0,
 		[]byte{0x00, 0x00, 0x00},
 		0x0000,
 		0,
 	},
-	IDParts{
+	{
 		ID{0x00, 0x00, 0x00, 0x00, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0x00, 0x00, 0x01},
 		0,
 		[]byte{0xaa, 0xbb, 0xcc},
@@ -44,6 +44,8 @@ var IDs = []IDParts{
 
 func TestIDPartsExtraction(t *testing.T) {
 	for i, v := range IDs {
+		v := v
+
 		t.Run(fmt.Sprintf("Test%d", i), func(t *testing.T) {
 			if got, want := v.id.Time(), time.Unix(v.timestamp, 0); got != want {
 				t.Errorf("Time() = %v, want %v", got, want)
@@ -67,6 +69,7 @@ func TestNew(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		ids[i] = New()
 	}
+
 	for i := 1; i < 10; i++ {
 		prevID := ids[i-1]
 		id := ids[i]
@@ -110,7 +113,9 @@ func TestFromString(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	want := ID{0x4d, 0x88, 0xe1, 0x5b, 0x60, 0xf4, 0x86, 0xe4, 0x28, 0x41, 0x2d, 0xc9}
+
 	if got != want {
 		t.Errorf("FromString() = %v, want %v", got, want)
 	}
@@ -132,9 +137,11 @@ func TestIDJSONMarshaling(t *testing.T) {
 	id := ID{0x4d, 0x88, 0xe1, 0x5b, 0x60, 0xf4, 0x86, 0xe4, 0x28, 0x41, 0x2d, 0xc9}
 	v := jsonType{ID: &id, Str: "test"}
 	data, err := json.Marshal(&v)
+
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if got, want := string(data), `{"ID":"9m4e2mr0ui3e8a215n4g","Str":"test"}`; got != want {
 		t.Errorf("json.Marshal() = %v, want %v", got, want)
 	}
@@ -144,27 +151,34 @@ func TestIDJSONUnmarshaling(t *testing.T) {
 	data := []byte(`{"ID":"9m4e2mr0ui3e8a215n4g","Str":"test"}`)
 	v := jsonType{}
 	err := json.Unmarshal(data, &v)
+
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	want := ID{0x4d, 0x88, 0xe1, 0x5b, 0x60, 0xf4, 0x86, 0xe4, 0x28, 0x41, 0x2d, 0xc9}
+
 	if got := *v.ID; got.Compare(want) != 0 {
 		t.Errorf("json.Unmarshal() = %v, want %v", got, want)
 	}
-
 }
 
 func TestIDJSONUnmarshalingError(t *testing.T) {
 	v := jsonType{}
 	err := json.Unmarshal([]byte(`{"ID":"9M4E2MR0UI3E8A215N4G"}`), &v)
+
 	if err != ErrInvalidID {
 		t.Errorf("json.Unmarshal() err=%v, want %v", err, ErrInvalidID)
 	}
+
 	err = json.Unmarshal([]byte(`{"ID":"TYjhW2D0huQoQS"}`), &v)
+
 	if err != ErrInvalidID {
 		t.Errorf("json.Unmarshal() err=%v, want %v", err, ErrInvalidID)
 	}
+
 	err = json.Unmarshal([]byte(`{"ID":"TYjhW2D0huQoQS3kdk"}`), &v)
+
 	if err != ErrInvalidID {
 		t.Errorf("json.Unmarshal() err=%v, want %v", err, ErrInvalidID)
 	}
@@ -173,9 +187,11 @@ func TestIDJSONUnmarshalingError(t *testing.T) {
 func TestIDDriverValue(t *testing.T) {
 	id := ID{0x4d, 0x88, 0xe1, 0x5b, 0x60, 0xf4, 0x86, 0xe4, 0x28, 0x41, 0x2d, 0xc9}
 	got, err := id.Value()
+
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if want := "9m4e2mr0ui3e8a215n4g"; got != want {
 		t.Errorf("Value() = %v, want %v", got, want)
 	}
@@ -184,10 +200,13 @@ func TestIDDriverValue(t *testing.T) {
 func TestIDDriverScan(t *testing.T) {
 	got := ID{}
 	err := got.Scan("9m4e2mr0ui3e8a215n4g")
+
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	want := ID{0x4d, 0x88, 0xe1, 0x5b, 0x60, 0xf4, 0x86, 0xe4, 0x28, 0x41, 0x2d, 0xc9}
+
 	if got.Compare(want) != 0 {
 		t.Errorf("Scan() = %v, want %v", got, want)
 	}
@@ -198,6 +217,7 @@ func TestIDDriverScanError(t *testing.T) {
 	if got, want := id.Scan(0), errors.New("xid: scanning unsupported type: int"); !reflect.DeepEqual(got, want) {
 		t.Errorf("Scan() err=%v, want %v", got, want)
 	}
+
 	if got, want := id.Scan("0"), ErrInvalidID; got != want {
 		t.Errorf("Scan() err=%v, want %v", got, want)
 	}
@@ -207,10 +227,13 @@ func TestIDDriverScanByteFromDatabase(t *testing.T) {
 	got := ID{}
 	bs := []byte("9m4e2mr0ui3e8a215n4g")
 	err := got.Scan(bs)
+
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	want := ID{0x4d, 0x88, 0xe1, 0x5b, 0x60, 0xf4, 0x86, 0xe4, 0x28, 0x41, 0x2d, 0xc9}
+
 	if got.Compare(want) != 0 {
 		t.Errorf("Scan() = %v, want %v", got, want)
 	}
@@ -299,9 +322,11 @@ func TestNilID_IsNil(t *testing.T) {
 func TestFromBytes_Invariant(t *testing.T) {
 	want := New()
 	got, err := FromBytes(want.Bytes())
+
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if got.Compare(want) != 0 {
 		t.Error("FromBytes(id.Bytes()) != id")
 	}
@@ -317,8 +342,9 @@ func TestFromBytes_InvalidBytes(t *testing.T) {
 		{13, true},
 	}
 	for _, c := range cases {
-		b := make([]byte, c.length, c.length)
+		b := make([]byte, c.length)
 		_, err := FromBytes(b)
+
 		if got, want := err != nil, c.shouldFail; got != want {
 			t.Errorf("FromBytes() error got %v, want %v", got, want)
 		}
@@ -339,6 +365,7 @@ func TestID_Compare(t *testing.T) {
 		if p.expected != p.left.Compare(p.right) {
 			t.Errorf("%s Compare to %s should return %d", p.left, p.right, p.expected)
 		}
+
 		if -1*p.expected != p.right.Compare(p.left) {
 			t.Errorf("%s Compare to %s should return %d", p.right, p.left, -1*p.expected)
 		}
@@ -351,6 +378,7 @@ func TestSorter_Len(t *testing.T) {
 	if got, want := sorter([]ID{}).Len(), 0; got != want {
 		t.Errorf("Len() %v, want %v", got, want)
 	}
+
 	if got, want := sorter(IDList).Len(), 3; got != want {
 		t.Errorf("Len() %v, want %v", got, want)
 	}
@@ -361,9 +389,11 @@ func TestSorter_Less(t *testing.T) {
 	if !sorter.Less(1, 0) {
 		t.Errorf("Less(1, 0) not true")
 	}
+
 	if sorter.Less(2, 1) {
 		t.Errorf("Less(2, 1) true")
 	}
+
 	if sorter.Less(0, 0) {
 		t.Errorf("Less(0, 0) true")
 	}
@@ -374,13 +404,17 @@ func TestSorter_Swap(t *testing.T) {
 	ids = append(ids, IDList...)
 	sorter := sorter(ids)
 	sorter.Swap(0, 1)
+
 	if got, want := ids[0], IDList[1]; !reflect.DeepEqual(got, want) {
 		t.Error("ids[0] != IDList[1]")
 	}
+
 	if got, want := ids[1], IDList[0]; !reflect.DeepEqual(got, want) {
 		t.Error("ids[1] != IDList[0]")
 	}
+
 	sorter.Swap(2, 2)
+
 	if got, want := ids[2], IDList[2]; !reflect.DeepEqual(got, want) {
 		t.Error("ids[2], IDList[2]")
 	}
@@ -390,6 +424,7 @@ func TestSort(t *testing.T) {
 	ids := make([]ID, 0)
 	ids = append(ids, IDList...)
 	Sort(ids)
+
 	if got, want := ids, []ID{IDList[1], IDList[2], IDList[0]}; !reflect.DeepEqual(got, want) {
 		t.Fail()
 	}

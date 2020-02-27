@@ -4,7 +4,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 
-	"github.com/rs/xid"
+	"github.com/skarm/xid"
 )
 
 type ID struct {
@@ -16,18 +16,21 @@ func (id ID) Value() (driver.Value, error) {
 	if id.ID.IsNil() {
 		return nil, nil
 	}
+
 	return id.ID[:], nil
 }
 
 // Scan implements the sql.Scanner interface.
-func (id *ID) Scan(value interface{}) (err error) {
+func (id *ID) Scan(value interface{}) error {
 	switch val := value.(type) {
 	case []byte:
 		i, err := xid.FromBytes(val)
 		if err != nil {
 			return err
 		}
+
 		*id = ID{ID: i}
+
 		return nil
 	case nil:
 		*id = ID{ID: xid.NilID()}

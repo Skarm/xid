@@ -32,7 +32,7 @@
 //   - Embedded time with 1 second precision
 //   - Unicity guaranteed for 16,777,216 (24 bits) unique ids per second and per host/process
 //
-// Best used with xlog's RequestIDHandler (https://godoc.org/github.com/rs/xlog#RequestIDHandler).
+// Best used with xlog's RequestIDHandler (https://pkg.go.dev/github.com/rs/xlog?tab=doc#RequestIDHandler).
 //
 // References:
 //
@@ -43,7 +43,6 @@ package xid
 
 import (
 	"bytes"
-	"crypto/md5"
 	"crypto/rand"
 	"database/sql/driver"
 	"encoding/binary"
@@ -56,6 +55,8 @@ import (
 	"sync/atomic"
 	"time"
 	"unsafe"
+
+	"github.com/cespare/xxhash/v2"
 )
 
 // Code inspired from mgo/bson ObjectId
@@ -98,6 +99,7 @@ func init() {
 	for i := 0; i < len(dec); i++ {
 		dec[i] = 0xFF
 	}
+
 	for i := 0; i < len(encoding); i++ {
 		dec[encoding[i]] = byte(i)
 	}
@@ -117,19 +119,20 @@ func init() {
 func readMachineID() []byte {
 	id := make([]byte, 3)
 	hid, err := readPlatformMachineID()
+
 	if err != nil || len(hid) == 0 {
 		hid, err = os.Hostname()
 	}
+
 	if err == nil && len(hid) != 0 {
-		hw := md5.New()
-		hw.Write([]byte(hid))
+		hw := xxhash.New()
+		_, _ = hw.Write([]byte(hid))
 		copy(id, hw.Sum(nil))
-	} else {
+	} else if _, randErr := rand.Reader.Read(id); randErr != nil {
 		// Fallback to rand number if machine id can't be gathered
-		if _, randErr := rand.Reader.Read(id); randErr != nil {
-			panic(fmt.Errorf("xid: cannot get hostname nor generate a random number: %v; %v", err, randErr))
-		}
+		panic(fmt.Errorf("xid: cannot get hostname nor generate a random number: %v; %v", err, randErr))
 	}
+
 	return id
 }
 
@@ -137,8 +140,9 @@ func readMachineID() []byte {
 func randInt() uint32 {
 	b := make([]byte, 3)
 	if _, err := rand.Reader.Read(b); err != nil {
-		panic(fmt.Errorf("xid: cannot generate random number: %v;", err))
+		panic(fmt.Errorf("xid: cannot generate random number: %v", err))
 	}
+
 	return uint32(b[0])<<16 | uint32(b[1])<<8 | uint32(b[2])
 }
 
@@ -164,6 +168,7 @@ func NewWithTime(t time.Time) ID {
 	id[9] = byte(i >> 16)
 	id[10] = byte(i >> 8)
 	id[11] = byte(i)
+
 	return id
 }
 
@@ -171,6 +176,7 @@ func NewWithTime(t time.Time) ID {
 func FromString(id string) (ID, error) {
 	i := &ID{}
 	err := i.UnmarshalText([]byte(id))
+
 	return *i, err
 }
 
@@ -178,6 +184,7 @@ func FromString(id string) (ID, error) {
 func (id ID) String() string {
 	text := make([]byte, encodedLen)
 	encode(text, id[:])
+
 	return *(*string)(unsafe.Pointer(&text))
 }
 
@@ -185,6 +192,7 @@ func (id ID) String() string {
 func (id ID) MarshalText() ([]byte, error) {
 	text := make([]byte, encodedLen)
 	encode(text, id[:])
+
 	return text, nil
 }
 
@@ -193,9 +201,11 @@ func (id ID) MarshalJSON() ([]byte, error) {
 	if id.IsNil() {
 		return []byte("null"), nil
 	}
+
 	text := make([]byte, encodedLen+2)
 	encode(text[1:encodedLen+1], id[:])
 	text[0], text[encodedLen+1] = '"', '"'
+
 	return text, nil
 }
 
@@ -231,22 +241,25 @@ func (id *ID) UnmarshalText(text []byte) error {
 	if len(text) != encodedLen {
 		return ErrInvalidID
 	}
+
 	for _, c := range text {
 		if dec[c] == 0xFF {
 			return ErrInvalidID
 		}
 	}
+
 	decode(id, text)
+
 	return nil
 }
 
 // UnmarshalJSON implements encoding/json Unmarshaler interface
 func (id *ID) UnmarshalJSON(b []byte) error {
-	s := string(b)
-	if s == "null" {
+	if s := string(b); s == "null" {
 		*id = nilID
 		return nil
 	}
+
 	return id.UnmarshalText(b[1 : len(b)-1])
 }
 
@@ -302,7 +315,9 @@ func (id ID) Value() (driver.Value, error) {
 	if id.IsNil() {
 		return nil, nil
 	}
+
 	b, err := id.MarshalText()
+
 	return string(b), err
 }
 
@@ -339,10 +354,13 @@ func (id ID) Bytes() []byte {
 // FromBytes convert the byte array representation of `ID` back to `ID`
 func FromBytes(b []byte) (ID, error) {
 	var id ID
+
 	if len(b) != rawLen {
 		return id, ErrInvalidID
 	}
+
 	copy(id[:], b)
+
 	return id, nil
 }
 
