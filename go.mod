@@ -1,5 +1,5 @@
-module github.com/skarm/xid
+module github.com/Skarm/xid
 
-go 1.12
+go 1.13
 
 require github.com/cespare/xxhash/v2 v2.1.1

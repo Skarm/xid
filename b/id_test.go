@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/skarm/xid"
+	"github.com/Skarm/xid"
 )
 
 func TestIDValue(t *testing.T) {
