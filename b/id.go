@@ -36,6 +36,6 @@ func (id *ID) Scan(value interface{}) error {
 		*id = ID{ID: xid.NilID()}
 		return nil
 	default:
-		return fmt.Errorf("xid: scanning unsupported type: %T", value)
+		return fmt.Errorf("%w: %T", xid.ErrScanUnsupportedType, value)
 	}
 }

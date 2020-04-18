@@ -76,6 +76,8 @@ const (
 var (
 	// ErrInvalidID is returned when trying to unmarshal an invalid ID
 	ErrInvalidID = errors.New("xid: invalid ID")
+	// ErrScanUnsupportedType is returned when scan unsupported type
+	ErrScanUnsupportedType = errors.New("xid: scanning unsupported type")
 
 	// objectIDCounter is atomically incremented when generating a new ObjectId
 	// using NewObjectId() function. It's used as a counter part of an id.
@@ -130,7 +132,7 @@ func readMachineID() []byte {
 		copy(id, hw.Sum(nil))
 	} else if _, randErr := rand.Reader.Read(id); randErr != nil {
 		// Fallback to rand number if machine id can't be gathered
-		panic(fmt.Errorf("xid: cannot get hostname nor generate a random number: %v; %v", err, randErr))
+		panic(fmt.Errorf("xid: cannot get hostname nor generate a random number: %v; %w", err, randErr))
 	}
 
 	return id
@@ -140,7 +142,7 @@ func readMachineID() []byte {
 func randInt() uint32 {
 	b := make([]byte, 3)
 	if _, err := rand.Reader.Read(b); err != nil {
-		panic(fmt.Errorf("xid: cannot generate random number: %v", err))
+		panic(fmt.Errorf("xid: cannot generate random number: %w", err))
 	}
 
 	return uint32(b[0])<<16 | uint32(b[1])<<8 | uint32(b[2])
@@ -332,7 +334,7 @@ func (id *ID) Scan(value interface{}) (err error) {
 		*id = nilID
 		return nil
 	default:
-		return fmt.Errorf("xid: scanning unsupported type: %T", value)
+		return fmt.Errorf("%w: %T", ErrScanUnsupportedType, value)
 	}
 }
 
