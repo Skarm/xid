@@ -1,6 +1,6 @@
 # Globally Unique ID Generator
 
-[![godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://pkg.go.dev/github.com/Skarm/xid) [![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/rs/xid/master/LICENSE)
+[![godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://pkg.go.dev/github.com/Skarm/xid) [![license](http://img.shields.io/badge/license-MIT-red.svg?style=flat)](https://raw.githubusercontent.com/Skarm/xid/master/LICENSE)
 
 Package xid is a globally unique id generator library, ready to safely be used directly in your server code.
 
@@ -52,8 +52,8 @@ Features:
 - Unicity guaranteed for 16,777,216 (24 bits) unique ids per second and per host/process
 - Lock-free (i.e.: unlike UUIDv1 and v2)
 
-Best used with [zerolog](https://github.com/rs/zerolog)'s
-[RequestIDHandler](https://godoc.org/github.com/rs/zerolog/hlog#RequestIDHandler).
+Best used with [zerolog](https://github.com/Skarm/zerolog)'s
+[RequestIDHandler](https://godoc.org/github.com/Skarm/zerolog/hlog#RequestIDHandler).
 
 Notes:
 
@@ -71,7 +71,7 @@ References:
 
 ## Install
 
-    go get github.com/rs/xid
+    go get github.com/Skarm/xid
 
 ## Usage
 
